@@ -1,9 +1,6 @@
 import pygame
 import os
 import sys
-import random
-
-from pygame.constants import K_DOWN
 
 
 def load_image(name, colorkey=None):
@@ -52,8 +49,10 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
         keys = pygame.key.get_pressed()
-        if keys[K_DOWN]:
+        if keys[pygame.K_DOWN]:
             heros.update((0, 10))
+        if keys[pygame.K_UP]:
+            heros.update((0, -10))
         screen.fill((176, 206, 189))
         heros.draw(screen)
         pygame.display.flip()
