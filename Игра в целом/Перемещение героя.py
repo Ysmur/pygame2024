@@ -7,19 +7,23 @@ class Hero(pygame.sprite.Sprite):
         super().__init__(app.all_sprites, app.player_group)
         self.image = app.load_image("mar.png")
         self.rect = self.image.get_rect()
+        self.app = app
         # вычисляем маску для эффективного сравнения
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
-            app.tile_width * pos[0] + 15, app.tile_height * pos[1] + 5)
+            self.app.tile_width * pos[0] + 15, self.app.tile_height * pos[1] + 5)
 
 
     def update(self, pos):
         self.rect.x += pos[0]
         self.rect.y += pos[1]
+        if pygame.sprite.spritecollideany(self, self.app.tiles_group):
+            self.rect.x -= pos[0]
+            self.rect.y -= pos[1]
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, app, tile_type, pos_x, pos_y):
-        super().__init__(app.tiles_group, app.all_sprites)
+        super().__init__(app.all_sprites)
         tile_images = {
             'wall': app.load_image('box.png'),
             'empty': app.load_image('grass.png')
@@ -84,7 +88,7 @@ class App:
                 if level[y][x] == '.':
                     Tile(self,'empty', x, y)
                 elif level[y][x] == '#':
-                    Tile(self,'wall', x, y)
+                    self.tiles_group.add(Tile(self,'wall', x, y))
                 elif level[y][x] == '@':
                     Tile(self, 'empty', x, y)
                     new_player = Hero(self, (x, y))
@@ -132,15 +136,16 @@ class App:
                     self.game_over += 1
             keys = pygame.key.get_pressed()
             if keys[pygame.K_DOWN]:
-                self.hero.update((0, 10))
+                self.hero.update((0, self.tile_height))
             if keys[pygame.K_UP]:
-                self.hero.update((0, -10))
+                self.hero.update((0, -self.tile_height))
             if self.game_over == 5:
                 self.start_screen()
                 run = False
 
             self.screen.fill(pygame.Color('blue'))
             self.all_sprites.draw(self.screen)
+            self.tiles_group.draw(self.screen)
             self.player_group.draw(self.screen)
             pygame.display.flip()
             self.clock.tick(self.fps)
