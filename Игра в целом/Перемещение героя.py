@@ -21,6 +21,23 @@ class Hero(pygame.sprite.Sprite):
             self.rect.x -= pos[0]
             self.rect.y -= pos[1]
 
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - app.width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - app.height // 2)
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, app, tile_type, pos_x, pos_y):
         super().__init__(app.all_sprites)
@@ -46,6 +63,7 @@ class App:
         self.tiles_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
         self.hero, level_x, level_y = self.generate_level(self.load_level('map.txt'))
+        self.camera = Camera()
         self.fps = 50
 
 
@@ -142,6 +160,11 @@ class App:
             if self.game_over == 5:
                 self.start_screen()
                 run = False
+            # изменяем ракурс камеры
+            self.camera.update(self.hero)
+            # обновляем положение всех спрайтов
+            for sprite in self.all_sprites:
+                self.camera.apply(sprite)
 
             self.screen.fill(pygame.Color('blue'))
             self.all_sprites.draw(self.screen)
