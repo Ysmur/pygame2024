@@ -21,6 +21,33 @@ class Hero(pygame.sprite.Sprite):
             self.rect.x -= pos[0]
             self.rect.y -= pos[1]
 
+class AnimatedSprite(pygame.sprite.Sprite):
+    def __init__(self, app, columns, x, y):
+        super().__init__(app.player_group, app.all_sprites)
+        self.frames = []
+        self.cut_sheet(app, columns)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.rect.move(x, y)
+        self.flag = 0
+
+
+    def cut_sheet(self, app, columns):
+        sheet = app.load_image("mariosheet_03.png", -1)
+        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
+                                sheet.get_height())
+
+        for i in range(columns):
+            sheet = app.load_image(f"mariosheet_0{i + 3}.png", -1)
+            self.frames.append(sheet)
+
+    def update(self):
+        self.flag += 1
+        if self.flag == 10:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+            self.flag = 0
+
 
 class Camera:
     # зададим начальный сдвиг камеры
@@ -57,12 +84,13 @@ class App:
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Mario')
-        pygame.key.set_repeat(200, 70)
+        #pygame.key.set_repeat(200, 70)
         self.tile_width = self.tile_height = 50
         self.all_sprites = pygame.sprite.Group()
         self.tiles_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
         self.hero, level_x, level_y = self.generate_level(self.load_level('map.txt'))
+        self.dragon = AnimatedSprite(self, 7, 50, 50)
         self.camera = Camera()
         self.fps = 50
 
@@ -157,6 +185,11 @@ class App:
                 self.hero.update((0, self.tile_height))
             if keys[pygame.K_UP]:
                 self.hero.update((0, -self.tile_height))
+            if keys[pygame.K_LEFT]:
+                self.hero.update((-self.tile_width, 0))
+            if keys[pygame.K_RIGHT]:
+                self.dragon.update()
+                self.hero.update((self.tile_width, 0))
             if self.game_over == 5:
                 self.start_screen()
                 run = False
@@ -170,6 +203,7 @@ class App:
             self.all_sprites.draw(self.screen)
             self.tiles_group.draw(self.screen)
             self.player_group.draw(self.screen)
+
             pygame.display.flip()
             self.clock.tick(self.fps)
 
